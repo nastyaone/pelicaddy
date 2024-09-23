@@ -2,6 +2,8 @@
 
 set -e
 
+clear
+
 print_banner() {
   cat <<EOF
 
@@ -80,3 +82,35 @@ else
 fi
 
 peli_caddy_echo "Detected OS: $OS $VERSION"
+
+# Update and upgrade system
+peli_caddy_echo "Updating and upgrading the system packages..."
+
+if [[ "$OS_TYPE" == 0 || "$OS_TYPE" == 1 ]]; then
+    apt update && apt upgrade -y
+    peli_caddy_echo "System updated and upgraded on Debian/Ubuntu."
+elif [[ "$OS_TYPE" == 2 ]]; then
+    dnf upgrade -y
+    peli_caddy_echo "System updated and upgraded on Rocky Linux."
+else
+    peli_caddy_echo "Unsupported OS. Exiting."
+    exit 1
+fi
+
+clear
+
+# Optionally clean up unnecessary packages (Debian/Ubuntu only)
+if [[ "$OS_TYPE" == 0 || "$OS_TYPE" == 1 ]]; then
+    peli_caddy_echo "There may be unused packages on your system. Would you like to remove them?"
+    read -p "PeliCaddy: Run 'apt autoremove'? (yes/no): " cleanup_choice
+
+    if [[ "$cleanup_choice" == "yes" ]]; then
+        peli_caddy_echo "Running 'apt autoremove'..."
+        apt autoremove -y
+        peli_caddy_echo "Unused packages removed."
+    else
+        peli_caddy_echo "Skipping package cleanup."
+    fi
+else
+    peli_caddy_echo "Package cleanup is only applicable to Debian/Ubuntu systems. Skipping."
+fi
